@@ -67,6 +67,7 @@ function generateImage() {
         a: JSON.stringify(angle),
     };
 
+    saveJSON(errorData, `outputImageData${nf(count, 4)}`);
     httpPost(path, "json", data, gotImage, gotError);
 }
 
@@ -103,8 +104,6 @@ function imageReady() {
         truncation = incrementDirection
             ? truncation + truncationIncrement
             : truncation - truncationIncrement;
-
-        saveJSON(errorData, `outputImageData${nf(count, 4)}`);
     }
 
     setTimeout(generateImage, 100);
