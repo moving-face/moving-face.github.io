@@ -23,104 +23,106 @@ let stepLength = 24;
 let incrementDirection;
 
 function preload() {
-  importedData = loadJSON("data.json");
+    importedData = loadJSON("data.json");
 }
 
 function setup() {
-  createCanvas(imgSize, imgSize);
+    createCanvas(imgSize, imgSize);
 
-  a = importedData.z;
+    a = importedData.z;
 
-  importedNoise = importedData.noise;
+    importedNoise = importedData.noise;
 
-  truncation = importedData.truncation;
-  incrementDirection = importedData.direction === "true";
-  angle = parseFloat(importedData.a);
+    truncation = importedData.truncation;
+    incrementDirection = importedData.direction === "true";
+    angle = parseFloat(importedData.a);
 
-  for (let i = 0; i < vectorSize; i++) {
-    n[i] = new NoiseLoop(10, -1, 1, importedNoise[i].cx, importedNoise[i].cy);
-  }
+    for (let i = 0; i < vectorSize; i++) {
+        n[i] = new NoiseLoop(10, -1, 1, importedNoise[i].cx, importedNoise[i].cy);
+    }
 
-  generateImage();
+    generateImage();
 }
 
 function generateImage() {
-  const path = "http://localhost:8000/query";
+    const path = "http://localhost:8000/query";
 
-  for (let i = 0; i < vectorSize; i++) {
-    a[i] = n[i].value(angle);
-  }
+    for (let i = 0; i < vectorSize; i++) {
+        a[i] = n[i].value(angle);
+    }
 
-  let da = TWO_PI / (24 * 480);
-  angle += da;
+    let da = TWO_PI / (24 * 480);
+    angle += da;
 
-  const data = {
-    z: a,
-    truncation: truncation,
-  };
+    const data = {
+        z: a,
+        truncation: truncation,
+    };
 
-  const errorData = {
-    z: a,
-    noise: n,
-    truncation: truncation,
-    direction: JSON.stringify(incrementDirection),
-    a: JSON.stringify(angle),
-  };
-  saveJSON(errorData, `outputImageData${nf(count, 4)}`);
-  httpPost(path, "json", data, gotImage, gotError);
+    const errorData = {
+        z: a,
+        noise: n,
+        truncation: truncation,
+        direction: JSON.stringify(incrementDirection),
+        a: JSON.stringify(angle),
+    };
+
+    httpPost(path, "json", data, gotImage, gotError);
 }
 
 function gotError(error) {
-  console.error(error);
-  errorCount++;
-  setTimeout(generateImage, 100);
+    console.error(error);
+    errorCount++;
+    setTimeout(generateImage, 100);
 }
 
 function gotImage(result) {
-  outputImage = createImg(result.image, imageReady);
-  outputImage.hide();
+    outputImage = createImg(result.image, imageReady);
+    outputImage.hide();
 }
 
 function imageReady() {
-  background(255);
-  image(outputImage, 0, 0);
+    background(255);
+    image(outputImage, 0, 0);
 
-  save(`outputImage${nf(count, 4)}`);
+    save(`outputImage${nf(count, 4)}`);
 
-  count++;
-  fill(0);
-  console.log(count);
-  console.log("error_count = ", errorCount);
+    count++;
+    fill(0);
+    console.log(count);
+    console.log("error_count = ", errorCount);
 
-  if (count % stepLength == 0) {
-    if (truncation >= truncationUpperBounds) {
-      incrementDirection = false;
+    if (count % stepLength == 0) {
+        if (truncation >= truncationUpperBounds) {
+            incrementDirection = false;
+        }
+        if (truncation <= truncationLowerBounds) {
+            incrementDirection = true;
+        }
+
+        truncation = incrementDirection
+            ? truncation + truncationIncrement
+            : truncation - truncationIncrement;
+
+        saveJSON(errorData, `outputImageData${nf(count, 4)}`);
     }
-    if (truncation <= truncationLowerBounds) {
-      incrementDirection = true;
-    }
 
-    truncation = incrementDirection
-      ? truncation + truncationIncrement
-      : truncation - truncationIncrement;
-  }
-
-  setTimeout(generateImage, 100);
+    setTimeout(generateImage, 100);
 }
 
 class NoiseLoop {
-  constructor(diameter, min, max, cx, cy) {
-    this.diameter = diameter;
-    this.min = min;
-    this.max = max;
-    this.cx = cx;
-    this.cy = cy;
-  }
+    constructor(diameter, min, max, cx, cy) {
+        this.diameter = diameter;
+        this.min = min;
+        this.max = max;
+        this.cx = cx;
+        this.cy = cy;
+    }
 
-  value(a) {
-    let xoff = map(cos(a), -1, 1, this.cx, this.cx + this.diameter);
-    let yoff = map(sin(a), -1, 1, this.cy, this.cy + this.diameter);
-    let r = toxi.math.noise.simplexNoise.noise(xoff, yoff);
-    return map(r, -1, 1, this.min, this.max);
-  }
+    value(a) {
+        let xoff = map(cos(a), -1, 1, this.cx, this.cx + this.diameter);
+        let yoff = map(sin(a), -1, 1, this.cy, this.cy + this.diameter);
+        let r = toxi.math.noise.simplexNoise.noise(xoff, yoff);
+        return map(r, -1, 1, this.min, this.max);
+    }
 }
