@@ -9,6 +9,11 @@ let n = [];
 let a = [];
 
 let angle;
+let angleDirection = true;
+let angleUpperBounds = 10;
+let angleLowerBounds = 0;
+
+
 let count = 10310;
 let errorCount = 0;
 
@@ -47,12 +52,22 @@ function setup() {
 function generateImage() {
     const path = "http://localhost:8000/query";
 
+    let da = TWO_PI / (24 * 480);
+
+    if (angle >= angleUpperBounds) {
+        angleDirection = false;
+    }
+    if (angle <= angleLowerBounds) {
+        angleDirection = true;
+    }
+
+    angle = (angleDirection)
+        ? angle + da
+        : angle - da;
+
     for (let i = 0; i < vectorSize; i++) {
         a[i] = n[i].value(angle);
     }
-
-    let da = TWO_PI / (24 * 480);
-    angle += da;
 
     const data = {
         z: a,
@@ -65,6 +80,7 @@ function generateImage() {
         truncation: truncation,
         direction: JSON.stringify(incrementDirection),
         a: JSON.stringify(angle),
+        angleDirection: JSON.stringify(angleDirection),
     };
 
     saveJSON(errorData, `outputImageData${nf(count, 4)}`);
