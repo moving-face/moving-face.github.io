@@ -10,8 +10,8 @@ let a = [];
 
 let angle;
 let angleDirection = true;
-let angleUpperBounds = 10;
-let angleLowerBounds = 0;
+let angleUpperBounds = 9.5;
+let angleLowerBounds = 0.5;
 
 
 let count = 10310;
